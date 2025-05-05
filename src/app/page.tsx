@@ -1,5 +1,5 @@
 import React from 'react'; // Add React import
-import { LinearClient, Initiative, Project, ProjectStatus } from "@linear/sdk";
+import { LinearClient, Initiative, Project, ProjectStatus } from "@linear/sdk"; // Remove StringComparator import
 import { FiPackage } from 'react-icons/fi'; // Box icon for Delivery
 import { FaSeedling } from 'react-icons/fa'; // Sprout icon for Growth
 import { GiBrickWall } from 'react-icons/gi'; // Bricks icon for Foundation
@@ -28,83 +28,110 @@ async function getActiveInitiatives(): Promise<InitiativeWithProjects[]> {
   });
 
   try {
-    let allInitiatives: Initiative[] = [];
-    let initiativesConnection = await client.initiatives({ first: 50 });
-    allInitiatives = initiativesConnection.nodes;
-
-    while (initiativesConnection.pageInfo.hasNextPage) {
-      initiativesConnection = await initiativesConnection.fetchNext();
-      allInitiatives.push(...initiativesConnection.nodes);
-    }
-
-    if (!allInitiatives.length) {
-      console.log("No initiatives found in Linear.");
-      return [];
-    }
-
-    const activeInitiatives = allInitiatives.filter(
-      (initiative) => initiative.status === 'Active'
-    );
-
-    // Define project completion statuses
     const completionStatuses = new Set(['Completed', 'Canceled', 'Postponed']);
+    const processedInitiatives: InitiativeWithProjects[] = [];
+    let hasNextPage = true;
+    let afterCursor: string | undefined = undefined;
 
-    const initiativesWithProjectsPromises = activeInitiatives.map(async (initiative): Promise<InitiativeWithProjects> => {
-      let projectsWithStatus: ProjectWithStatus[] = [];
-      let completionPercentage = 0;
-      let completedProjectCount = 0;
-      let totalProjectCount = 0;
-      try {
-        const projectConnection = await initiative.projects({first: 50}); // Fetch more projects if needed for accuracy
+    console.log("Fetching active initiatives with projects and statuses...");
 
-        totalProjectCount = projectConnection.nodes.length; // Store total count initially
+    // Loop to handle pagination for initiatives
+    while (hasNextPage) {
+      // Attempt to fetch initiatives with nested projects and statuses
+      // Using server-side filtering and requesting nested data
+      // NOTE: The exact syntax for fetching nested relations (_relations/include/fields)
+      // might differ based on the SDK version and specifics. This is an educated guess.
+      const initiativesConnection = await client.initiatives({
+        first: 25, // Fetch in smaller batches to be safe
+        after: afterCursor,
+        // filter: { status: { name: { eq: 'Active' } } }, // Removed server-side filter
+        // Removed unsupported _relations parameter
+      });
 
-        const projectsWithStatusPromises = projectConnection.nodes.map(async (project: Project): Promise<ProjectWithStatus> => {
-          try {
-            const fetchedStatus = await project.status; // Access the status getter directly (await)
-            const status = fetchedStatus ?? null; // Assign null if fetchedStatus is undefined
-            return { project, status };
-          } catch (statusError) {
-            console.error(`Error fetching status for project ${project.id} (${project.name}):`, statusError);
-            return { project, status: null }; // Handle error fetching status
+      console.log(`Fetched page of initiatives. Has next: ${initiativesConnection.pageInfo.hasNextPage}. Nodes: ${initiativesConnection.nodes.length}`);
+
+      // Filter for active initiatives *client-side* after fetching batch
+      const activeInitiativesInBatch = initiativesConnection.nodes.filter(
+        (initiative) => initiative.status === 'Active'
+      );
+
+      // Process the filtered batch of active initiatives
+      for (const initiative of activeInitiativesInBatch) { // Loop over filtered batch
+        let projectsWithStatus: ProjectWithStatus[] = [];
+        let completedProjectCount = 0;
+        let totalProjectCount = 0;
+
+        try {
+          // Access projects - hopefully pre-fetched
+          // The exact access method might depend on how the SDK handles nested fetches.
+          // Using `await initiative.projects()` as a robust way that might
+          // return pre-fetched data or fetch if needed/not pre-fetched.
+          const projectConnection = await initiative.projects({ first: 100 }); // Fetch projects for this initiative (adjust 'first' if needed)
+          const projects = projectConnection.nodes ?? [];
+          totalProjectCount = projects.length;
+
+          // Process projects to get status (hope it's fast/cached due to parent query)
+          for (const project of projects) {
+            let status: ProjectStatus | null = null;
+            try {
+              // Still need to await status, but hope the SDK optimizes this
+              // if the data was part of the initial nested fetch.
+              const fetchedStatus = await project.status;
+              status = fetchedStatus ?? null;
+            } catch (statusError) {
+              console.error(`Error fetching status for project ${project.id} (${project.name}):`, statusError);
+            }
+            projectsWithStatus.push({ project, status });
+            if (status && completionStatuses.has(status.name)) {
+              completedProjectCount++;
+            }
           }
-        });
-        projectsWithStatus = await Promise.all(projectsWithStatusPromises);
-
-        // Calculate completion percentage and counts
-        totalProjectCount = projectsWithStatus.length; // Update total count after promises resolve (in case some failed)
-        if (totalProjectCount > 0) {
-          completedProjectCount = projectsWithStatus.filter(
-            ({ status }) => status && completionStatuses.has(status.name)
-          ).length;
-          completionPercentage = (completedProjectCount / totalProjectCount) * 100;
+        } catch (projectError) {
+          console.error(`Error processing projects for initiative ${initiative.id} (${initiative.name}):`, projectError);
+          // Assign empty projects array if fetching/processing fails
+          projectsWithStatus = [];
+          totalProjectCount = 0;
+          completedProjectCount = 0;
         }
 
-      } catch (projectError) {
-        console.error(`Error fetching projects for initiative ${initiative.id} (${initiative.name}):`, projectError);
-        // Initiative returned with empty projects and 0% completion
+        const completionPercentage = totalProjectCount > 0 ? (completedProjectCount / totalProjectCount) * 100 : 0;
+
+        processedInitiatives.push({
+          initiative,
+          projects: projectsWithStatus,
+          completionPercentage,
+          completedProjectCount,
+          totalProjectCount
+        });
       }
-      // Return initiative, projects, and calculated values
-      return { initiative, projects: projectsWithStatus, completionPercentage, completedProjectCount, totalProjectCount };
-    });
 
-    const resolvedInitiativesWithProjects = await Promise.all(initiativesWithProjectsPromises);
+      // Update pagination state
+      hasNextPage = initiativesConnection.pageInfo.hasNextPage;
+      afterCursor = initiativesConnection.pageInfo.endCursor;
+      if (hasNextPage) {
+         console.log("Fetching next page of initiatives...");
+         // Optional: Add a small delay here if needed
+         // await new Promise(resolve => setTimeout(resolve, 200)); // e.g., 200ms delay
+      }
+    } // End while loop for initiative pagination
 
-    resolvedInitiativesWithProjects.sort((a, b) => {
+    // Sort final results
+    processedInitiatives.sort((a, b) => {
       const dateA = new Date(a.initiative.updatedAt).getTime();
       const dateB = new Date(b.initiative.updatedAt).getTime();
       return dateB - dateA;
     });
 
-    console.log(`Fetched ${allInitiatives.length} total initiatives, found ${resolvedInitiativesWithProjects.length} active.`);
-    return resolvedInitiativesWithProjects;
+    console.log(`Finished fetching. Processed ${processedInitiatives.length} active initiatives.`);
+    return processedInitiatives;
 
   } catch (error) {
-    console.error("Error fetching initiatives from Linear:", error);
+    console.error("Error in getActiveInitiatives:", error);
     if (error instanceof Error) {
-        throw new Error(`Failed to fetch initiatives from Linear: ${error.message}`);
+      // Re-throw specific types of errors if needed, or just log
+      throw new Error(`Failed to fetch initiatives from Linear: ${error.message}`);
     } else {
-        throw new Error("An unknown error occurred while fetching initiatives from Linear.");
+      throw new Error("An unknown error occurred while fetching initiatives.");
     }
   }
 }
@@ -247,7 +274,7 @@ export default async function HomePage() {
                                   <span className={`w-2 h-2 ${dotColor} rounded-full mr-1.5 flex-shrink-0`}></span>
                                   {statusName}:
                                 </h4>
-                                <ul className="list-disc list-inside space-y-1 text-xs text-gray-500 dark:text-gray-400 ml-3.5"> {/* Indent list slightly */}
+                                <ul className="list-disc list-inside space-y-1 text-sm text-gray-500 dark:text-gray-400 ml-3.5"> {/* Indent list slightly */}
                                   {projectsInGroup.map(({ project }) => ( // Only need project here
                                     <li key={project.id}>
                                       {project.name}
