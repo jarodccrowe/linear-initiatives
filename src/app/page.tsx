@@ -3,6 +3,7 @@ import { LinearClient, Initiative, Project, ProjectStatus } from "@linear/sdk"; 
 import { FiPackage } from 'react-icons/fi'; // Box icon for Delivery
 import { FaSeedling } from 'react-icons/fa'; // Sprout icon for Growth
 import { GiBrickWall } from 'react-icons/gi'; // Bricks icon for Foundation
+import AutoRefresher from '@/components/AutoRefresher'; // Import the client component
 
 interface ProjectWithStatus {
   project: Project;
@@ -175,6 +176,7 @@ export default async function HomePage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6 sm:p-12 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
+      <AutoRefresher /> {/* Add the client component to trigger refreshes */}
       <div className="w-full">
         <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-gray-900 dark:text-gray-100 text-center">Active Initiatives</h1>
 
@@ -310,4 +312,5 @@ export default async function HomePage() {
   );
 }
 
+// Revalidate the page every 10 minutes (600 seconds)
 export const revalidate = 600;
