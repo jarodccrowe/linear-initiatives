@@ -1,5 +1,5 @@
-import React from 'react'; // Add React import
-import { LinearClient, Initiative, Project, ProjectStatus } from "@linear/sdk"; // Remove StringComparator import
+import React, { JSX } from 'react'; // Remove explicit JSX import
+import { LinearClient, Initiative, Project, ProjectStatus } from "@linear/sdk";
 import { FiPackage } from 'react-icons/fi'; // Box icon for Delivery
 import { FaSeedling } from 'react-icons/fa'; // Sprout icon for Growth
 import { GiBrickWall } from 'react-icons/gi'; // Bricks icon for Foundation
