@@ -1,4 +1,8 @@
+import React from 'react'; // Add React import
 import { LinearClient, Initiative, Project, ProjectStatus } from "@linear/sdk";
+import { FiPackage } from 'react-icons/fi'; // Box icon for Delivery
+import { FaSeedling } from 'react-icons/fa'; // Sprout icon for Growth
+import { GiBrickWall } from 'react-icons/gi'; // Bricks icon for Foundation
 
 interface ProjectWithStatus {
   project: Project;
@@ -105,6 +109,29 @@ async function getActiveInitiatives(): Promise<InitiativeWithProjects[]> {
   }
 }
 
+// Helper function to render title with icon
+const renderInitiativeTitle = (name: string): JSX.Element => {
+  const iconMap: { [key: string]: { icon: JSX.Element; className: string } } = {
+    // Use the same neutral color for all icons
+    '[Delivery]': { icon: <FiPackage />, className: 'text-gray-500 dark:text-gray-400' },
+    '[Growth]': { icon: <FaSeedling />, className: 'text-gray-500 dark:text-gray-400' },
+    '[Foundation]': { icon: <GiBrickWall />, className: 'text-gray-500 dark:text-gray-400' },
+  };
+
+  for (const prefix in iconMap) {
+    if (name.startsWith(prefix)) {
+      const { icon, className } = iconMap[prefix];
+      return (
+        <>
+          <span className={`inline-block mr-2 ${className}`}>{icon}</span>
+          {name.substring(prefix.length).trim()}
+        </>
+      );
+    }
+  }
+  return <>{name}</>; // No prefix found
+};
+
 export default async function HomePage() {
   let activeInitiatives: InitiativeWithProjects[] = []; // Use updated type
   let error: string | null = null;
@@ -142,17 +169,22 @@ export default async function HomePage() {
         {!error && activeInitiatives.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeInitiatives.map(({ initiative, projects, completionPercentage, completedProjectCount, totalProjectCount }) => (
-              <div key={initiative.id} className="bg-white p-5 sm:p-6 rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow duration-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600">
-                <h2 className="text-xl sm:text-2xl font-semibold mb-2 text-gray-900 dark:text-gray-100">{initiative.name}</h2>
-                <p className="text-gray-700 mb-4 text-sm sm:text-base dark:text-gray-300">{initiative.description || <span className="text-gray-500 dark:text-gray-400 italic">No description provided.</span>}</p>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs sm:text-sm text-gray-500 dark:text-gray-400 space-y-2 sm:space-y-0">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
-                     Status: {initiative.status || 'Unknown'}
-                  </span>
-                  <span>Last Updated: {new Date(initiative.updatedAt).toLocaleDateString()} {new Date(initiative.updatedAt).toLocaleTimeString()}</span>
-                </div>
-                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                  <p><span className="font-medium text-gray-700 dark:text-gray-300">Target Date:</span> {initiative.targetDate || 'N/A'}</p>
+              <div key={initiative.id} className="bg-white p-5 sm:p-6 rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow duration-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600 flex flex-col"> {/* Ensure cards are flex columns */}
+                {/* Use helper function for title and add flex styling */}
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 text-gray-900 dark:text-gray-100 flex items-center">
+                  {renderInitiativeTitle(initiative.name)}
+                </h2>
+                <div>
+                  <p className="text-gray-700 mb-4 text-sm sm:text-base dark:text-gray-300">{initiative.description || <span className="text-gray-500 dark:text-gray-400 italic">No description provided.</span>}</p>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs sm:text-sm text-gray-500 dark:text-gray-400 space-y-2 sm:space-y-0">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                       Status: {initiative.status || 'Unknown'}
+                    </span>
+                    <span>Last Updated: {new Date(initiative.updatedAt).toLocaleDateString()} {new Date(initiative.updatedAt).toLocaleTimeString()}</span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                    <p><span className="font-medium text-gray-700 dark:text-gray-300">Target Date:</span> {initiative.targetDate || 'N/A'}</p>
+                  </div>
                 </div>
 
                 <div className="mt-4">
@@ -169,41 +201,73 @@ export default async function HomePage() {
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Active Projects:</h3> {/* Changed title slightly */}
-                  
-                  {(() => { // Use IIFE to manage filtering logic
-                    const displayStatuses = new Set(['Planning', 'In Progress', 'Ready', 'Stalled']); // Define statuses to display
+                  {(() => { // Use IIFE to manage filtering and grouping logic
+                    // Define statuses to display and their desired order
+                    const displayStatuses = ['Planning', 'In Progress', 'Stalled', 'Ready'];
+                    const statusSet = new Set(displayStatuses);
+
+                    // Filter projects initially
                     const filteredProjects = projects.filter(({ status }) => 
-                      status && displayStatuses.has(status.name)
+                      status && statusSet.has(status.name)
                     );
 
-                    // Define the custom sort order
-                    const sortOrder = { 'Planning': 1, 'In Progress': 2, 'Stalled': 3, 'Ready': 4 };
+                    // Group projects by status
+                    const groupedProjects = filteredProjects.reduce<{ [key: string]: ProjectWithStatus[] }>((acc, projectStatus) => {
+                      const statusName = projectStatus.status?.name;
+                      if (statusName) {
+                        if (!acc[statusName]) {
+                          acc[statusName] = [];
+                        }
+                        // Keep original sorting within status group if needed, or sort here
+                        acc[statusName].push(projectStatus);
+                      }
+                      return acc;
+                    }, {});
 
-                    // Sort the filtered projects
-                    filteredProjects.sort((a, b) => {
-                      const statusA = a.status?.name || '';
-                      const statusB = b.status?.name || '';
-                      // Get the sort order value, defaulting to a large number for unknown statuses
-                      const orderA = sortOrder[statusA as keyof typeof sortOrder] || 99;
-                      const orderB = sortOrder[statusB as keyof typeof sortOrder] || 99;
-                      return orderA - orderB;
-                    });
+                    let contentRendered = false;
 
-                    return filteredProjects.length > 0 ? (
-                      <ul className="list-disc list-inside space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                        {filteredProjects.map(({ project, status }) => ( // Map over sorted projects
-                          <li key={project.id}>
-                            {project.name} -
-                            <span className="ml-1 font-medium" style={{ color: status?.color || 'inherit' }}>
-                              {status?.name || <span className="italic text-gray-500 dark:text-gray-400">Status unavailable</span>}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 italic">No active projects linked (Planning, In Progress, Ready, Stalled).</p> // Updated empty state message
+                    // Define colors for status dots
+                    const statusColorMap: { [key: string]: string } = {
+                      'Planning': 'bg-blue-500',
+                      'In Progress': 'bg-yellow-500',
+                      'Ready': 'bg-green-500',
+                      'Stalled': 'bg-orange-600', // Changed from red to dark orange
+                    };
+
+                    return (
+                      <>
+                        {displayStatuses.map(statusName => {
+                          const projectsInGroup = groupedProjects[statusName];
+                          if (projectsInGroup && projectsInGroup.length > 0) {
+                            contentRendered = true; // Mark that we have content to render
+                            const dotColor = statusColorMap[statusName] || 'bg-gray-300'; // Default color
+                            return (
+                              <div key={statusName} className="mb-3 last:mb-0"> {/* Add margin between status groups */}
+                                <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 flex items-center">
+                                  <span className={`w-2 h-2 ${dotColor} rounded-full mr-1.5 flex-shrink-0`}></span>
+                                  {statusName}:
+                                </h4>
+                                <ul className="list-disc list-inside space-y-1 text-xs text-gray-500 dark:text-gray-400 ml-3.5"> {/* Indent list slightly */}
+                                  {projectsInGroup.map(({ project }) => ( // Only need project here
+                                    <li key={project.id}>
+                                      {project.name}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            );
+                          }
+                          return null; // No projects for this status
+                        })}
+                        {/* If no content was rendered at all */}
+                        {!contentRendered && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                            No projects in Planning, In Progress, Stalled, or Ready states.
+                          </p>
+                        )}
+                      </>
                     );
+
                   })()}
                 </div>
 
