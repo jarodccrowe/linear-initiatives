@@ -207,7 +207,9 @@ export default async function HomePage() {
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
                        Status: {initiative.status || 'Unknown'}
                     </span>
-                    <span>Last Updated: {new Date(initiative.updatedAt).toLocaleDateString()} {new Date(initiative.updatedAt).toLocaleTimeString()}</span>
+                    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400"> 
+                      Last Updated: {new Date(initiative.updatedAt).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
+                    </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-1">
                     <p><span className="font-medium text-gray-700 dark:text-gray-300">Target Date:</span> {initiative.targetDate || 'N/A'}</p>
@@ -225,77 +227,78 @@ export default async function HomePage() {
                       style={{ width: `${completionPercentage}%` }}
                     ></div>
                   </div>
-                </div>
 
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  {(() => { // Use IIFE to manage filtering and grouping logic
-                    // Define statuses to display and their desired order
-                    const displayStatuses = ['Planning', 'In Progress', 'Stalled', 'Ready'];
-                    const statusSet = new Set(displayStatuses);
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    {(() => { // Use IIFE to manage filtering and grouping logic
+                      // Define statuses to display and their desired order
+                      const displayStatuses = ['Planning', 'In Progress', 'Stalled', 'Ready'];
+                      const statusSet = new Set(displayStatuses);
 
-                    // Filter projects initially
-                    const filteredProjects = projects.filter(({ status }) => 
-                      status && statusSet.has(status.name)
-                    );
+                      // Filter projects initially
+                      const filteredProjects = projects.filter(({ status }) => 
+                        status && statusSet.has(status.name)
+                      );
 
-                    // Group projects by status
-                    const groupedProjects = filteredProjects.reduce<{ [key: string]: ProjectWithStatus[] }>((acc, projectStatus) => {
-                      const statusName = projectStatus.status?.name;
-                      if (statusName) {
-                        if (!acc[statusName]) {
-                          acc[statusName] = [];
-                        }
-                        // Keep original sorting within status group if needed, or sort here
-                        acc[statusName].push(projectStatus);
-                      }
-                      return acc;
-                    }, {});
-
-                    let contentRendered = false;
-
-                    // Define colors for status dots
-                    const statusColorMap: { [key: string]: string } = {
-                      'Planning': 'bg-blue-500',
-                      'In Progress': 'bg-yellow-500',
-                      'Ready': 'bg-green-500',
-                      'Stalled': 'bg-orange-600', // Changed from red to dark orange
-                    };
-
-                    return (
-                      <>
-                        {displayStatuses.map(statusName => {
-                          const projectsInGroup = groupedProjects[statusName];
-                          if (projectsInGroup && projectsInGroup.length > 0) {
-                            contentRendered = true; // Mark that we have content to render
-                            const dotColor = statusColorMap[statusName] || 'bg-gray-300'; // Default color
-                            return (
-                              <div key={statusName} className="mb-3 last:mb-0"> {/* Add margin between status groups */}
-                                <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 flex items-center">
-                                  <span className={`w-2 h-2 ${dotColor} rounded-full mr-1.5 flex-shrink-0`}></span>
-                                  {statusName}:
-                                </h4>
-                                <ul className="list-disc list-inside space-y-1 text-sm text-gray-500 dark:text-gray-400 ml-3.5"> {/* Indent list slightly */}
-                                  {projectsInGroup.map(({ project }) => ( // Only need project here
-                                    <li key={project.id}>
-                                      {project.name}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            );
+                      // Group projects by status
+                      const groupedProjects = filteredProjects.reduce<{ [key: string]: ProjectWithStatus[] }>((acc, projectStatus) => {
+                        const statusName = projectStatus.status?.name;
+                        if (statusName) {
+                          if (!acc[statusName]) {
+                            acc[statusName] = [];
                           }
-                          return null; // No projects for this status
-                        })}
-                        {/* If no content was rendered at all */}
-                        {!contentRendered && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-                            No projects in Planning, In Progress, Stalled, or Ready states.
-                          </p>
-                        )}
-                      </>
-                    );
+                          // Keep original sorting within status group if needed, or sort here
+                          acc[statusName].push(projectStatus);
+                        }
+                        return acc;
+                      }, {});
 
-                  })()}
+                      let contentRendered = false;
+
+                      // Define colors for status dots
+                      const statusColorMap: { [key: string]: string } = {
+                        'Planning': 'bg-blue-500',
+                        'In Progress': 'bg-yellow-500',
+                        'Ready': 'bg-green-500',
+                        'Stalled': 'bg-orange-600', // Changed from red to dark orange
+                      };
+
+                      return (
+                        <>
+                          {displayStatuses.map(statusName => {
+                            const projectsInGroup = groupedProjects[statusName];
+                            if (projectsInGroup && projectsInGroup.length > 0) {
+                              contentRendered = true; // Mark that we have content to render
+                              const dotColor = statusColorMap[statusName] || 'bg-gray-300'; // Default color
+                              return (
+                                <div key={statusName} className="mb-3 last:mb-0"> {/* Add margin between status groups */}
+                                  <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 flex items-center">
+                                    <span className={`w-2 h-2 ${dotColor} rounded-full mr-1.5 flex-shrink-0`}></span>
+                                    {statusName}:
+                                  </h4>
+                                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-500 dark:text-gray-400 ml-3.5"> {/* Indent list slightly */}
+                                    {projectsInGroup.map(({ project }) => ( // Only need project here
+                                      <li key={project.id}>
+                                        {project.name}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              );
+                            }
+                            return null; // No projects for this status
+                          })}
+                          {/* If no content was rendered at all */}
+                          {!contentRendered && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                              No projects in Planning, In Progress, Stalled, or Ready states.
+                            </p>
+                          )}
+                        </>
+                      );
+
+                    })()}
+                  </div>
+
                 </div>
 
               </div> // End of initiative card div
