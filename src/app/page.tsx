@@ -1,9 +1,9 @@
-import React, { JSX } from 'react'; // Remove explicit JSX import
+import React, { JSX } from 'react'; 
 import { LinearClient, Initiative, Project, ProjectStatus } from "@linear/sdk";
-import { FiPackage } from 'react-icons/fi'; // Box icon for Delivery
-import { FaSeedling } from 'react-icons/fa'; // Sprout icon for Growth
-import { GiBrickWall } from 'react-icons/gi'; // Bricks icon for Foundation
-import AutoRefresher from '@/components/AutoRefresher'; // Import the client component
+import { FiPackage } from 'react-icons/fi'; 
+import { FaSeedling } from 'react-icons/fa'; 
+import { GiBrickWall } from 'react-icons/gi'; 
+import AutoRefresher from '@/components/AutoRefresher'; 
 
 interface ProjectWithStatus {
   project: Project;
@@ -28,6 +28,8 @@ async function getActiveInitiatives(): Promise<InitiativeWithProjects[]> {
     apiKey: process.env.LINEAR_API_KEY,
   });
 
+  const filterOutKeywords = ["data assets", "core business", "maintenance", "demo"];
+
   try {
     const completionStatuses = new Set(['Completed', 'Canceled', 'Postponed']);
     const processedInitiatives: InitiativeWithProjects[] = [];
@@ -36,47 +38,41 @@ async function getActiveInitiatives(): Promise<InitiativeWithProjects[]> {
 
     console.log("Fetching active initiatives with projects and statuses...");
 
-    // Loop to handle pagination for initiatives
     while (hasNextPage) {
-      // Attempt to fetch initiatives with nested projects and statuses
-      // Using server-side filtering and requesting nested data
-      // NOTE: The exact syntax for fetching nested relations (_relations/include/fields)
-      // might differ based on the SDK version and specifics. This is an educated guess.
       const initiativesConnection = await client.initiatives({
-        first: 25, // Fetch in smaller batches to be safe
+        first: 25, 
         after: afterCursor,
-        // filter: { status: { name: { eq: 'Active' } } }, // Removed server-side filter
-        // Removed unsupported _relations parameter
       });
 
       console.log(`Fetched page of initiatives. Has next: ${initiativesConnection.pageInfo.hasNextPage}. Nodes: ${initiativesConnection.nodes.length}`);
 
-      // Filter for active initiatives *client-side* after fetching batch
       const activeInitiativesInBatch = initiativesConnection.nodes.filter(
-        (initiative) => initiative.status === 'Active'
+        (initiative) => {
+          if (initiative.status !== 'Active') return false;
+          const initiativeNameLower = initiative.name.toLowerCase();
+          const shouldFilterOut = filterOutKeywords.some(keyword => 
+            initiativeNameLower.includes(keyword.toLowerCase())
+          );
+          if (shouldFilterOut) {
+            console.log(`Filtering out initiative: "${initiative.name}" due to keyword match.`);
+          }
+          return !shouldFilterOut;
+        }
       );
 
-      // Process the filtered batch of active initiatives
-      for (const initiative of activeInitiativesInBatch) { // Loop over filtered batch
+      for (const initiative of activeInitiativesInBatch) { 
         let projectsWithStatus: ProjectWithStatus[] = [];
         let completedProjectCount = 0;
         let totalProjectCount = 0;
 
         try {
-          // Access projects - hopefully pre-fetched
-          // The exact access method might depend on how the SDK handles nested fetches.
-          // Using `await initiative.projects()` as a robust way that might
-          // return pre-fetched data or fetch if needed/not pre-fetched.
-          const projectConnection = await initiative.projects({ first: 100 }); // Fetch projects for this initiative (adjust 'first' if needed)
+          const projectConnection = await initiative.projects({ first: 100 }); 
           const projects = projectConnection.nodes ?? [];
           totalProjectCount = projects.length;
 
-          // Process projects to get status (hope it's fast/cached due to parent query)
           for (const project of projects) {
             let status: ProjectStatus | null = null;
             try {
-              // Still need to await status, but hope the SDK optimizes this
-              // if the data was part of the initial nested fetch.
               const fetchedStatus = await project.status;
               status = fetchedStatus ?? null;
             } catch (statusError) {
@@ -89,7 +85,6 @@ async function getActiveInitiatives(): Promise<InitiativeWithProjects[]> {
           }
         } catch (projectError) {
           console.error(`Error processing projects for initiative ${initiative.id} (${initiative.name}):`, projectError);
-          // Assign empty projects array if fetching/processing fails
           projectsWithStatus = [];
           totalProjectCount = 0;
           completedProjectCount = 0;
@@ -106,17 +101,13 @@ async function getActiveInitiatives(): Promise<InitiativeWithProjects[]> {
         });
       }
 
-      // Update pagination state
       hasNextPage = initiativesConnection.pageInfo.hasNextPage;
       afterCursor = initiativesConnection.pageInfo.endCursor;
       if (hasNextPage) {
          console.log("Fetching next page of initiatives...");
-         // Optional: Add a small delay here if needed
-         // await new Promise(resolve => setTimeout(resolve, 200)); // e.g., 200ms delay
       }
-    } // End while loop for initiative pagination
+    } 
 
-    // Sort final results
     processedInitiatives.sort((a, b) => {
       const dateA = new Date(a.initiative.updatedAt).getTime();
       const dateB = new Date(b.initiative.updatedAt).getTime();
@@ -129,7 +120,6 @@ async function getActiveInitiatives(): Promise<InitiativeWithProjects[]> {
   } catch (error) {
     console.error("Error in getActiveInitiatives:", error);
     if (error instanceof Error) {
-      // Re-throw specific types of errors if needed, or just log
       throw new Error(`Failed to fetch initiatives from Linear: ${error.message}`);
     } else {
       throw new Error("An unknown error occurred while fetching initiatives.");
@@ -137,10 +127,8 @@ async function getActiveInitiatives(): Promise<InitiativeWithProjects[]> {
   }
 }
 
-// Helper function to render title with icon
 const renderInitiativeTitle = (name: string): JSX.Element => {
   const iconMap: { [key: string]: { icon: JSX.Element; className: string } } = {
-    // Use the same neutral color for all icons
     '[Delivery]': { icon: <FiPackage />, className: 'text-gray-500 dark:text-gray-400' },
     '[Growth]': { icon: <FaSeedling />, className: 'text-gray-500 dark:text-gray-400' },
     '[Foundation]': { icon: <GiBrickWall />, className: 'text-gray-500 dark:text-gray-400' },
@@ -157,12 +145,13 @@ const renderInitiativeTitle = (name: string): JSX.Element => {
       );
     }
   }
-  return <>{name}</>; // No prefix found
+  return <>{name}</>; 
 };
 
 export default async function HomePage() {
-  let activeInitiatives: InitiativeWithProjects[] = []; // Use updated type
+  let activeInitiatives: InitiativeWithProjects[] = []; 
   let error: string | null = null;
+  const lastUpdated = new Date(); 
 
   try {
     activeInitiatives = await getActiveInitiatives();
@@ -176,52 +165,54 @@ export default async function HomePage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6 sm:p-12 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
-      <AutoRefresher /> {/* Add the client component to trigger refreshes */}
+      <AutoRefresher /> 
+      <div className="text-right text-sm text-gray-500 dark:text-gray-400 mb-4">
+        Last Updated: {lastUpdated.toLocaleString()} 
+      </div>
       <div className="w-full">
-        <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-gray-900 dark:text-gray-100 text-center">Active Initiatives</h1>
+        <h1 className="text-4xl sm:text-5xl font-bold mb-8 text-gray-900 dark:text-gray-100 text-center">Active Initiatives</h1>
 
         {error && (
           <div className="mb-6 text-red-800 bg-red-100 border border-red-300 rounded-md p-4 w-full text-center shadow-sm dark:bg-red-900/30 dark:border-red-700 dark:text-red-300">
-            <p className="font-semibold">Error loading initiatives:</p>
-            <p>{error}</p>
+            <p className="font-semibold text-base">Error loading initiatives:</p>
+            <p className="text-base">{error}</p>
             {error.includes("API key") && <p className="mt-2 text-sm">Please ensure your `LINEAR_API_KEY` in `.env.local` is correct and the file is saved. You might need to restart the development server.</p>}
           </div>
         )}
 
         {!error && activeInitiatives.length === 0 && (
           <div className="text-center text-gray-600 bg-white p-6 rounded-lg shadow border border-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400">
-             <p>No active initiatives found.</p>
+             <p className="text-base">No active initiatives found.</p>
              <p className="text-sm mt-2">Check Linear or ensure initiatives have the status &apos;Active&apos;.</p>
            </div>
         )}
 
         {!error && activeInitiatives.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {activeInitiatives.map(({ initiative, projects, completionPercentage, completedProjectCount, totalProjectCount }) => (
-              <div key={initiative.id} className="bg-white p-5 sm:p-6 rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow duration-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600 flex flex-col"> {/* Ensure cards are flex columns */}
-                {/* Use helper function for title and add flex styling */}
-                <h2 className="text-xl sm:text-2xl font-semibold mb-3 text-gray-900 dark:text-gray-100 flex items-center">
+              <div key={initiative.id} className="bg-white p-5 sm:p-6 rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow duration-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600 flex flex-col"> 
+                <h2 className="text-2xl sm:text-3xl font-semibold mb-3 text-gray-900 dark:text-gray-100 flex items-center">
                   {renderInitiativeTitle(initiative.name)}
                 </h2>
                 <div>
-                  <p className="text-gray-700 mb-4 text-sm sm:text-base dark:text-gray-300">{initiative.description || <span className="text-gray-500 dark:text-gray-400 italic">No description provided.</span>}</p>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs sm:text-sm text-gray-500 dark:text-gray-400 space-y-2 sm:space-y-0">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                  <p className="text-gray-700 mb-4 text-base sm:text-lg dark:text-gray-300">{initiative.description || <span className="text-gray-500 dark:text-gray-400 italic">No description provided.</span>}</p>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm sm:text-base text-gray-500 dark:text-gray-400 space-y-2 sm:space-y-0">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
                        Status: {initiative.status || 'Unknown'}
                     </span>
-                    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400"> 
+                    <span className="text-sm sm:text-base text-gray-500 dark:text-gray-400"> 
                       Last Updated: {new Date(initiative.updatedAt).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
                     </span>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400 space-y-1">
                     <p><span className="font-medium text-gray-700 dark:text-gray-300">Target Date:</span> {initiative.targetDate || 'N/A'}</p>
                   </div>
                 </div>
 
                 <div className="mt-4">
                   <div className="flex justify-between mb-1">
-                    <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Progress ({completedProjectCount}/{totalProjectCount})</span> {/* Display counts */}
-                    <span className="text-xs font-medium text-blue-700 dark:text-blue-400">{completionPercentage.toFixed(1)}%</span>
+                    <span className="text-sm font-medium text-blue-700 dark:text-blue-400">Progress ({completedProjectCount}/{totalProjectCount})</span> 
+                    <span className="text-sm font-medium text-blue-700 dark:text-blue-400">{completionPercentage.toFixed(1)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
                     <div
@@ -231,24 +222,20 @@ export default async function HomePage() {
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    {(() => { // Use IIFE to manage filtering and grouping logic
-                      // Define statuses to display and their desired order
+                    {(() => { 
                       const displayStatuses = ['Planning', 'In Progress', 'Stalled', 'Ready'];
                       const statusSet = new Set(displayStatuses);
 
-                      // Filter projects initially
                       const filteredProjects = projects.filter(({ status }) => 
                         status && statusSet.has(status.name)
                       );
 
-                      // Group projects by status
                       const groupedProjects = filteredProjects.reduce<{ [key: string]: ProjectWithStatus[] }>((acc, projectStatus) => {
                         const statusName = projectStatus.status?.name;
                         if (statusName) {
                           if (!acc[statusName]) {
                             acc[statusName] = [];
                           }
-                          // Keep original sorting within status group if needed, or sort here
                           acc[statusName].push(projectStatus);
                         }
                         return acc;
@@ -256,12 +243,11 @@ export default async function HomePage() {
 
                       let contentRendered = false;
 
-                      // Define colors for status dots
                       const statusColorMap: { [key: string]: string } = {
                         'Planning': 'bg-blue-500',
                         'In Progress': 'bg-yellow-500',
                         'Ready': 'bg-green-500',
-                        'Stalled': 'bg-orange-600', // Changed from red to dark orange
+                        'Stalled': 'bg-orange-600', 
                       };
 
                       return (
@@ -269,16 +255,16 @@ export default async function HomePage() {
                           {displayStatuses.map(statusName => {
                             const projectsInGroup = groupedProjects[statusName];
                             if (projectsInGroup && projectsInGroup.length > 0) {
-                              contentRendered = true; // Mark that we have content to render
-                              const dotColor = statusColorMap[statusName] || 'bg-gray-300'; // Default color
+                              contentRendered = true; 
+                              const dotColor = statusColorMap[statusName] || 'bg-gray-300'; 
                               return (
-                                <div key={statusName} className="mb-3 last:mb-0"> {/* Add margin between status groups */}
-                                  <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 flex items-center">
+                                <div key={statusName} className="mb-3 last:mb-0"> 
+                                  <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1 flex items-center">
                                     <span className={`w-2 h-2 ${dotColor} rounded-full mr-1.5 flex-shrink-0`}></span>
                                     {statusName}:
                                   </h4>
-                                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-500 dark:text-gray-400 ml-3.5"> {/* Indent list slightly */}
-                                    {projectsInGroup.map(({ project }) => ( // Only need project here
+                                  <ul className="list-disc list-inside space-y-1 text-base text-gray-500 dark:text-gray-400 ml-3.5"> 
+                                    {projectsInGroup.map(({ project }) => ( 
                                       <li key={project.id}>
                                         {project.name}
                                       </li>
@@ -287,11 +273,10 @@ export default async function HomePage() {
                                 </div>
                               );
                             }
-                            return null; // No projects for this status
+                            return null; 
                           })}
-                          {/* If no content was rendered at all */}
                           {!contentRendered && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 italic">
                               No projects in Planning, In Progress, Stalled, or Ready states.
                             </p>
                           )}
@@ -303,14 +288,13 @@ export default async function HomePage() {
 
                 </div>
 
-              </div> // End of initiative card div
+              </div> 
             ))}
-          </div> // End of restored div wrapper
+          </div> 
         )}
       </div>
     </main>
   );
 }
 
-// Revalidate the page every 10 minutes (600 seconds)
 export const revalidate = 600;
