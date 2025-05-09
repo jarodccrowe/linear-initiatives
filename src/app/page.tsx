@@ -18,6 +18,11 @@ interface InitiativeWithProjects {
   totalProjectCount: number;
 }
 
+interface HomePageProps {
+  activeInitiatives: InitiativeWithProjects[];
+  error?: string;
+}
+
 async function getActiveInitiatives(): Promise<InitiativeWithProjects[]> {
   if (!process.env.LINEAR_API_KEY) {
     console.error("Linear API key is not configured.");
@@ -28,7 +33,7 @@ async function getActiveInitiatives(): Promise<InitiativeWithProjects[]> {
     apiKey: process.env.LINEAR_API_KEY,
   });
 
-  const filterOutKeywords = ["data assets", "core business", "maintenance", "demo"];
+  const filterOutKeywords = ["data assets", "core business", "maintenance"];
 
   try {
     const completionStatuses = new Set(['Completed', 'Canceled', 'Postponed']);
@@ -148,71 +153,49 @@ const renderInitiativeTitle = (name: string): JSX.Element => {
   return <>{name}</>; 
 };
 
-export default async function HomePage() {
-  let activeInitiatives: InitiativeWithProjects[] = []; 
-  let error: string | null = null;
-  const lastUpdated = new Date(); 
-
-  try {
-    activeInitiatives = await getActiveInitiatives();
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      error = err.message;
-    } else {
-      error = "An unexpected error occurred.";
-    }
-  }
-
+const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
   return (
     <main className="flex min-h-screen flex-col items-center p-6 sm:p-12 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
       <AutoRefresher /> 
-      <div className="text-right text-sm text-gray-500 dark:text-gray-400 mb-4">
-        Last Updated: {lastUpdated.toLocaleString()} 
-      </div>
       <div className="w-full">
-        <h1 className="text-4xl sm:text-5xl font-bold mb-8 text-gray-900 dark:text-gray-100 text-center">Active Initiatives</h1>
+        <h1 className="text-5xl sm:text-6xl font-bold mb-8 text-gray-900 dark:text-gray-100 text-center">Initiatives</h1>
 
         {error && (
           <div className="mb-6 text-red-800 bg-red-100 border border-red-300 rounded-md p-4 w-full text-center shadow-sm dark:bg-red-900/30 dark:border-red-700 dark:text-red-300">
-            <p className="font-semibold text-base">Error loading initiatives:</p>
-            <p className="text-base">{error}</p>
-            {error.includes("API key") && <p className="mt-2 text-sm">Please ensure your `LINEAR_API_KEY` in `.env.local` is correct and the file is saved. You might need to restart the development server.</p>}
+            <p className="font-semibold text-lg">Error loading initiatives:</p>
+            <p className="text-lg">{error}</p>
+            {error.includes("API key") && <p className="mt-2 text-base">Please ensure your `LINEAR_API_KEY` in `.env.local` is correct and the file is saved. You might need to restart the development server.</p>}
           </div>
         )}
 
         {!error && activeInitiatives.length === 0 && (
           <div className="text-center text-gray-600 bg-white p-6 rounded-lg shadow border border-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400">
-             <p className="text-base">No active initiatives found.</p>
-             <p className="text-sm mt-2">Check Linear or ensure initiatives have the status &apos;Active&apos;.</p>
+             <p className="text-lg">No active initiatives found.</p>
+             <p className="text-base mt-2">Check Linear or ensure initiatives have the status &apos;Active&apos;.</p>
            </div>
         )}
 
         {!error && activeInitiatives.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {activeInitiatives.map(({ initiative, projects, completionPercentage, completedProjectCount, totalProjectCount }) => (
+          <div className="grid grid-cols-1 gap-4 w-full max-w-5xl mx-auto">
+            {activeInitiatives
+              .sort((a, b) => b.completionPercentage - a.completionPercentage)
+              .map(({ initiative, completionPercentage, completedProjectCount, totalProjectCount }) => (
               <div key={initiative.id} className="bg-white p-5 sm:p-6 rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow duration-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600 flex flex-col"> 
-                <h2 className="text-2xl sm:text-3xl font-semibold mb-3 text-gray-900 dark:text-gray-100 flex items-center">
+                <h2 className="text-3xl sm:text-4xl font-semibold mb-3 text-gray-900 dark:text-gray-100 flex items-center">
                   {renderInitiativeTitle(initiative.name)}
                 </h2>
                 <div>
-                  <p className="text-gray-700 mb-4 text-base sm:text-lg dark:text-gray-300">{initiative.description || <span className="text-gray-500 dark:text-gray-400 italic">No description provided.</span>}</p>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm sm:text-base text-gray-500 dark:text-gray-400 space-y-2 sm:space-y-0">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
-                       Status: {initiative.status || 'Unknown'}
-                    </span>
-                    <span className="text-sm sm:text-base text-gray-500 dark:text-gray-400"> 
-                      Last Updated: {new Date(initiative.updatedAt).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
-                    </span>
+                  <p className="text-gray-700 mb-4 text-lg sm:text-xl dark:text-gray-300">{initiative.description || <span className="text-gray-500 dark:text-gray-400 italic">No description provided.</span>}</p>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-base sm:text-lg text-gray-500 dark:text-gray-400 space-y-2 sm:space-y-0">
+                    {/* Status and Last Updated removed as per request */}
                   </div>
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                    <p><span className="font-medium text-gray-700 dark:text-gray-300">Target Date:</span> {initiative.targetDate || 'N/A'}</p>
-                  </div>
+                  {/* Target Date display removed as per request */}
                 </div>
 
                 <div className="mt-4">
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-blue-700 dark:text-blue-400">Progress ({completedProjectCount}/{totalProjectCount})</span> 
-                    <span className="text-sm font-medium text-blue-700 dark:text-blue-400">{completionPercentage.toFixed(1)}%</span>
+                    <span className="text-base font-medium text-blue-700 dark:text-blue-400">Completed ({completedProjectCount}/{totalProjectCount})</span> 
+                    <span className="text-base font-medium text-blue-700 dark:text-blue-400">{completionPercentage.toFixed(1)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
                     <div
@@ -220,72 +203,6 @@ export default async function HomePage() {
                       style={{ width: `${completionPercentage}%` }}
                     ></div>
                   </div>
-
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    {(() => { 
-                      const displayStatuses = ['Planning', 'In Progress', 'Stalled', 'Ready'];
-                      const statusSet = new Set(displayStatuses);
-
-                      const filteredProjects = projects.filter(({ status }) => 
-                        status && statusSet.has(status.name)
-                      );
-
-                      const groupedProjects = filteredProjects.reduce<{ [key: string]: ProjectWithStatus[] }>((acc, projectStatus) => {
-                        const statusName = projectStatus.status?.name;
-                        if (statusName) {
-                          if (!acc[statusName]) {
-                            acc[statusName] = [];
-                          }
-                          acc[statusName].push(projectStatus);
-                        }
-                        return acc;
-                      }, {});
-
-                      let contentRendered = false;
-
-                      const statusColorMap: { [key: string]: string } = {
-                        'Planning': 'bg-blue-500',
-                        'In Progress': 'bg-yellow-500',
-                        'Ready': 'bg-green-500',
-                        'Stalled': 'bg-orange-600', 
-                      };
-
-                      return (
-                        <>
-                          {displayStatuses.map(statusName => {
-                            const projectsInGroup = groupedProjects[statusName];
-                            if (projectsInGroup && projectsInGroup.length > 0) {
-                              contentRendered = true; 
-                              const dotColor = statusColorMap[statusName] || 'bg-gray-300'; 
-                              return (
-                                <div key={statusName} className="mb-3 last:mb-0"> 
-                                  <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1 flex items-center">
-                                    <span className={`w-2 h-2 ${dotColor} rounded-full mr-1.5 flex-shrink-0`}></span>
-                                    {statusName}:
-                                  </h4>
-                                  <ul className="list-disc list-inside space-y-1 text-base text-gray-500 dark:text-gray-400 ml-3.5"> 
-                                    {projectsInGroup.map(({ project }) => ( 
-                                      <li key={project.id}>
-                                        {project.name}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              );
-                            }
-                            return null; 
-                          })}
-                          {!contentRendered && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                              No projects in Planning, In Progress, Stalled, or Ready states.
-                            </p>
-                          )}
-                        </>
-                      );
-
-                    })()}
-                  </div>
-
                 </div>
 
               </div> 
@@ -295,6 +212,20 @@ export default async function HomePage() {
       </div>
     </main>
   );
+}
+
+export default async function Page() {
+  try {
+    const initiatives = await getActiveInitiatives();
+    return <HomePage activeInitiatives={initiatives} />;
+  } catch (e: unknown) {
+    let errorMessage = "An unknown error occurred.";
+    if (e instanceof Error) {
+      errorMessage = e.message;
+    }
+    console.error("Failed to load initiatives for Page:", errorMessage);
+    return <HomePage activeInitiatives={[]} error={errorMessage} />;
+  }
 }
 
 export const revalidate = 600;
