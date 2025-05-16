@@ -30,3 +30,14 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 1.1rem;
 }
+
+.flashing-image-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: contain; /* Ensure full image is visible and centered */
+  z-index: 9999; /* Ensure it's on top of other content */
+  pointer-events: none; /* Allows clicks to pass through if needed, remove if image should be interactive */
+}
