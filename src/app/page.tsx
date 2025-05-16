@@ -154,14 +154,21 @@ const renderInitiativeTitle = (name: string): JSX.Element => {
 };
 
 const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
+  const getProgressBarBgColor = (health: string | undefined) => {
+    if (health === 'onTrack') return 'bg-[var(--status-green)]';
+    if (health === 'atRisk') return 'bg-[var(--status-amber)]';
+    if (health === 'offTrack') return 'bg-[var(--status-red)]';
+    return 'bg-[var(--theme-text-secondary)]'; // Fallback color
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center p-6 sm:p-12 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
+    <main className="flex min-h-screen flex-col items-center p-6 sm:p-12 bg-[var(--theme-bg)] text-[var(--theme-text-primary)]">
       <AutoRefresher /> 
       <div className="w-full">
-        <h1 className="text-5xl sm:text-6xl font-bold mb-8 text-gray-900 dark:text-gray-100 text-center">Initiatives</h1>
+        <h1 className="text-5xl sm:text-6xl font-bold mb-8 text-[var(--theme-text-primary)] text-center">Initiatives</h1>
 
         {error && (
-          <div className="mb-6 text-red-800 bg-red-100 border border-red-300 rounded-md p-4 w-full text-center shadow-sm dark:bg-red-900/30 dark:border-red-700 dark:text-red-300">
+          <div className="mb-6 text-red-300 bg-red-900/20 border border-red-700/50 rounded-md p-4 w-full text-center shadow-sm">
             <p className="font-semibold text-lg">Error loading initiatives:</p>
             <p className="text-lg">{error}</p>
             {error.includes("API key") && <p className="mt-2 text-base">Please ensure your `LINEAR_API_KEY` in `.env.local` is correct and the file is saved. You might need to restart the development server.</p>}
@@ -169,7 +176,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
         )}
 
         {!error && activeInitiatives.length === 0 && (
-          <div className="text-center text-gray-600 bg-white p-6 rounded-lg shadow border border-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400">
+          <div className="text-center text-[var(--theme-text-secondary)] bg-[var(--theme-card-bg)] p-6 rounded-lg shadow border border-[var(--theme-border)]">
              <p className="text-lg">No active initiatives found.</p>
              <p className="text-base mt-2">Check Linear or ensure initiatives have the status &apos;Active&apos;.</p>
            </div>
@@ -180,12 +187,12 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
             {activeInitiatives
               .sort((a, b) => b.completionPercentage - a.completionPercentage)
               .map(({ initiative, completionPercentage, completedProjectCount, totalProjectCount }) => (
-              <div key={initiative.id} className="bg-white p-5 sm:p-6 rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow duration-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600 flex flex-col"> 
-                <h2 className="text-4xl sm:text-5xl font-semibold mb-3 text-gray-900 dark:text-gray-100 flex items-center">
+              <div key={initiative.id} className="bg-[var(--theme-card-bg)] p-5 sm:p-6 rounded-lg shadow border border-[var(--theme-border)] hover:border-gray-500 flex flex-col"> 
+                <h2 className="text-4xl sm:text-5xl font-semibold mb-3 text-[var(--theme-text-primary)] flex items-center">
                   {renderInitiativeTitle(initiative.name)}
                 </h2>
                 <div>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-base sm:text-lg text-gray-500 dark:text-gray-400 space-y-2 sm:space-y-0">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-base sm:text-lg text-[var(--theme-text-secondary)] space-y-2 sm:space-y-0">
                     {/* Status and Last Updated removed as per request */}
                   </div>
                   {/* Target Date display removed as per request */}
@@ -193,11 +200,11 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
 
                 <div className="mt-4">
                   <div className="flex justify-between mb-1">
-                    <span className="text-xl sm:text-2xl font-medium text-blue-700 dark:text-blue-400">Completed ({completedProjectCount}/{totalProjectCount})</span> 
+                    <span className="text-xl sm:text-2xl font-medium text-[var(--theme-text-secondary)]">Completed ({completedProjectCount}/{totalProjectCount})</span> 
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
+                  <div className="w-full bg-[var(--theme-border)] rounded-full h-1.5">
                     <div
-                      className="bg-blue-600 h-1.5 rounded-full dark:bg-blue-500"
+                      className={`${getProgressBarBgColor(initiative.health)} h-1.5 rounded-full`}
                       style={{ width: `${completionPercentage}%` }}
                     ></div>
                   </div>
