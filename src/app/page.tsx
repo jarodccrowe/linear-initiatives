@@ -181,11 +181,10 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
               .sort((a, b) => b.completionPercentage - a.completionPercentage)
               .map(({ initiative, completionPercentage, completedProjectCount, totalProjectCount }) => (
               <div key={initiative.id} className="bg-white p-5 sm:p-6 rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow duration-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600 flex flex-col"> 
-                <h2 className="text-3xl sm:text-4xl font-semibold mb-3 text-gray-900 dark:text-gray-100 flex items-center">
+                <h2 className="text-4xl sm:text-5xl font-semibold mb-3 text-gray-900 dark:text-gray-100 flex items-center">
                   {renderInitiativeTitle(initiative.name)}
                 </h2>
                 <div>
-                  <p className="text-gray-700 mb-4 text-lg sm:text-xl dark:text-gray-300">{initiative.description || <span className="text-gray-500 dark:text-gray-400 italic">No description provided.</span>}</p>
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-base sm:text-lg text-gray-500 dark:text-gray-400 space-y-2 sm:space-y-0">
                     {/* Status and Last Updated removed as per request */}
                   </div>
@@ -194,8 +193,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
 
                 <div className="mt-4">
                   <div className="flex justify-between mb-1">
-                    <span className="text-base font-medium text-blue-700 dark:text-blue-400">Completed ({completedProjectCount}/{totalProjectCount})</span> 
-                    <span className="text-base font-medium text-blue-700 dark:text-blue-400">{completionPercentage.toFixed(1)}%</span>
+                    <span className="text-xl sm:text-2xl font-medium text-blue-700 dark:text-blue-400">Completed ({completedProjectCount}/{totalProjectCount})</span> 
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
                     <div
