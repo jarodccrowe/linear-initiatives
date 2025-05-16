@@ -144,7 +144,7 @@ const renderInitiativeTitle = (name: string): JSX.Element => {
       const { icon, className } = iconMap[prefix];
       return (
         <>
-          <span className={`inline-block mr-2 ${className}`}>{icon}</span>
+          <span className={`inline-block mr-4 ${className}`}>{icon}</span>
           {name.substring(prefix.length).trim()}
         </>
       );
