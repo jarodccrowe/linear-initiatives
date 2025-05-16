@@ -11,7 +11,7 @@ export default function FlashingImage() {
       setTimeout(() => {
         setShowImage(false);
       }, 50); // Show for 0.05 seconds
-    }, 2220000); // Show every 37 minutes
+    }, 420000); // Show every 7 minutes
 
     return () => {
       clearInterval(mainInterval);
