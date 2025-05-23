@@ -11,7 +11,8 @@ const andyImages = [
   "/andy/DA2D12DC-4B9D-49F3-AF91-AF7EC0A154AA.jpeg",
   "/andy/Screenshot 2023-11-07 at 8.55.40 am.png",
   "/andy/image.jpg",
-  "/andy/image.png"
+  "/andy/image.png",
+  "/andy/wolverandy.png"
 ];
 
 export default function FlashingImage() {
