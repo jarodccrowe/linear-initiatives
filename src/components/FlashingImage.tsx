@@ -8,10 +8,11 @@ export default function FlashingImage() {
   useEffect(() => {
     const mainInterval = setInterval(() => {
       setShowImage(true);
+      console.log("showing image");
       setTimeout(() => {
         setShowImage(false);
-      }, 50); // Show for 0.05 seconds
-    }, 420000); // Show every 7 minutes
+      }, 1000);
+    }, 180000);
 
     return () => {
       clearInterval(mainInterval);
