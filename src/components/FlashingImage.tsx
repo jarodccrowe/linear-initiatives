@@ -55,7 +55,7 @@ export default function FlashingImage() {
           setShowImage(false);
         }, 1000); // Show for 1 second
       }
-    }, 18000); // Repeat every 3 minutes
+    }, 180000); // Repeat every 3 minutes
 
     return () => {
       clearInterval(mainIntervalId);
