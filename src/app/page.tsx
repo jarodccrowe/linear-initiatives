@@ -163,7 +163,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6 sm:p-12 bg-[var(--theme-bg)] text-[var(--theme-text-primary)]">
-      <AutoRefresher /> 
+      <AutoRefresher />
       <div className="w-full">
         <h1 className="text-5xl sm:text-6xl font-bold mb-8 text-[var(--theme-text-primary)] text-center">Initiatives</h1>
 
@@ -186,33 +186,36 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
             {activeInitiatives
               .sort((a, b) => b.completionPercentage - a.completionPercentage)
-              .map(({ initiative, completionPercentage, completedProjectCount, totalProjectCount }) => (
-              <div key={initiative.id} className="bg-[var(--theme-card-bg)] p-5 sm:p-6 rounded-lg shadow border border-[var(--theme-border)] hover:border-gray-500 flex flex-col"> 
-                <h2 className="text-4xl sm:text-5xl font-semibold mb-3 text-[var(--theme-text-primary)] flex items-center">
-                  {renderInitiativeTitle(initiative.name)}
-                </h2>
-                <div>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-base sm:text-lg text-[var(--theme-text-secondary)] space-y-2 sm:space-y-0">
-                    {/* Status and Last Updated removed as per request */}
-                  </div>
-                  {/* Target Date display removed as per request */}
-                </div>
+              .map(({ initiative, completionPercentage, completedProjectCount, totalProjectCount }) => {
+                const isGlass = initiative.name.toLowerCase().includes('glass');
+                return (
+                  <div key={initiative.id} className={`bg-[var(--theme-card-bg)] p-5 sm:p-6 rounded-lg shadow border border-[var(--theme-border)] hover:border-gray-500 flex flex-col ${isGlass ? 'glass-effect shimmer-effect' : ''}`}>
+                    <h2 className={`text-4xl sm:text-5xl font-semibold mb-3 flex items-center ${isGlass ? 'rainbow-text' : 'text-[var(--theme-text-primary)]'}`}>
+                      {renderInitiativeTitle(initiative.name)}
+                    </h2>
+                    <div>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-base sm:text-lg text-[var(--theme-text-secondary)] space-y-2 sm:space-y-0">
+                        {/* Status and Last Updated removed as per request */}
+                      </div>
+                      {/* Target Date display removed as per request */}
+                    </div>
 
-                <div className="mt-4">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-xl sm:text-2xl font-medium text-[var(--theme-text-secondary)]">Completed ({completedProjectCount}/{totalProjectCount})</span> 
-                  </div>
-                  <div className="w-full bg-[var(--theme-border)] rounded-full h-1.5">
-                    <div
-                      className={`${getProgressBarBgColor(initiative.health)} h-1.5 rounded-full`}
-                      style={{ width: `${completionPercentage}%` }}
-                    ></div>
-                  </div>
-                </div>
+                    <div className="mt-4">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-xl sm:text-2xl font-medium text-[var(--theme-text-secondary)]">Completed ({completedProjectCount}/{totalProjectCount})</span>
+                      </div>
+                      <div className="w-full bg-[var(--theme-border)] rounded-full h-1.5">
+                        <div
+                          className={`${getProgressBarBgColor(initiative.health)} h-1.5 rounded-full`}
+                          style={{ width: `${completionPercentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
 
-              </div> 
-            ))}
-          </div> 
+                  </div>
+                );
+            })}
+          </div>
         )}
       </div>
     </main>

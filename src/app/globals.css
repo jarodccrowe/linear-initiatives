@@ -41,3 +41,18 @@ body {
   z-index: 9999; /* Ensure it's on top of other content */
   pointer-events: none; /* Allows clicks to pass through if needed, remove if image should be interactive */
 }
+
+@keyframes rainbow-cycle {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.rainbow-text {
+  background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow-cycle 8s ease infinite;
+}
