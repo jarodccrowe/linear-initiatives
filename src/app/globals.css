@@ -49,10 +49,10 @@ body {
 }
 
 .rainbow-text {
-  background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
-  background-size: 200% 200%;
+  background: linear-gradient(90deg, #FFA500, #FFB347, #FF6B9D, #FF69B4, #FF1493, #DA70D6, #BA55D3, #9370DB, #8A2BE2, #6495ED, #4169E1, #87CEEB, #87CEFA, #B0E0E6);
+  background-size: 400% 400%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: rainbow-cycle 8s ease infinite;
+  animation: rainbow-cycle 15s ease infinite;
 }
