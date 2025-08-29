@@ -215,7 +215,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
         )}
 
         {!error && activeInitiatives.length > 0 && (
-          <div className="flex flex-col gap-3 w-full max-w-[65%] mx-auto">
+          <div className="flex flex-col gap-3 w-full max-w-[75%] mx-auto">
             {activeInitiatives
               .sort((a, b) => b.completionPercentage - a.completionPercentage)
               .map(({ initiative, completionPercentage, completedProjectCount, totalProjectCount }) => {
