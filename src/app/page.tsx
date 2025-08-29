@@ -231,7 +231,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
                           <span className="text-xl font-medium text-[var(--theme-text-secondary)]">
-                            {completedProjectCount}/{totalProjectCount} projects completed
+                            {completedProjectCount}/{totalProjectCount} projects done
                           </span>
                           <span className="text-lg text-[var(--theme-text-secondary)]">
                             ({Math.round(completionPercentage)}%)
