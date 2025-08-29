@@ -1,6 +1,6 @@
 import React, { JSX } from 'react'; 
 import { LinearClient, Initiative, Project, ProjectStatus } from "@linear/sdk";
-import { FiPackage } from 'react-icons/fi'; 
+import { FaTruck } from 'react-icons/fa'; 
 import { FaSeedling } from 'react-icons/fa'; 
 import { GiBrickWall } from 'react-icons/gi'; 
 import AutoRefresher from '@/components/AutoRefresher'; 
@@ -134,7 +134,7 @@ async function getActiveInitiatives(): Promise<InitiativeWithProjects[]> {
 
 const renderInitiativeTitle = (name: string): JSX.Element => {
   const iconMap: { [key: string]: { icon: JSX.Element; className: string } } = {
-    '[Delivery]': { icon: <FiPackage />, className: 'text-gray-500 dark:text-gray-400' },
+    '[Delivery]': { icon: <FaTruck />, className: 'text-gray-500 dark:text-gray-400' },
     '[Growth]': { icon: <FaSeedling />, className: 'text-gray-500 dark:text-gray-400' },
     '[Foundation]': { icon: <GiBrickWall />, className: 'text-gray-500 dark:text-gray-400' },
   };
