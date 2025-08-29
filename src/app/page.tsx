@@ -33,7 +33,7 @@ async function getActiveInitiatives(): Promise<InitiativeWithProjects[]> {
     apiKey: process.env.LINEAR_API_KEY,
   });
 
-  const filterOutKeywords = ["data assets", "core business", "maintenance"];
+  const filterOutKeywords = ["data assets", "core business", "maintenance", "cycle reporting repo"];
 
   try {
     const completionStatuses = new Set(['Completed', 'Canceled', 'Postponed']);
@@ -154,18 +154,50 @@ const renderInitiativeTitle = (name: string): JSX.Element => {
 };
 
 const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
-  const getProgressBarBgColor = (health: string | undefined) => {
-    if (health === 'onTrack') return 'bg-[var(--status-green)]';
-    if (health === 'atRisk') return 'bg-[var(--status-amber)]';
-    if (health === 'offTrack') return 'bg-[var(--status-red)]';
-    return 'bg-[var(--theme-text-secondary)]'; // Fallback color
+  const getPieChartColor = (health: string | undefined) => {
+    if (health === 'onTrack') return 'var(--status-green)';
+    if (health === 'atRisk') return 'var(--status-amber)';
+    if (health === 'offTrack') return 'var(--status-red)';
+    return 'var(--theme-text-secondary)'; // Fallback color
+  };
+
+  const PieChart: React.FC<{ percentage: number; health: string | undefined; size?: number }> = ({ percentage, health, size = 24 }) => {
+    const radius = size / 2 - 2;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDasharray = circumference;
+    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+    
+    return (
+      <div className="flex-shrink-0">
+        <svg width={size} height={size} className="transform -rotate-90">
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="var(--theme-border)"
+            strokeWidth="2"
+            fill="none"
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={getPieChartColor(health)}
+            strokeWidth="2"
+            fill="none"
+            strokeDasharray={strokeDasharray}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+    );
   };
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6 sm:p-12 bg-[var(--theme-bg)] text-[var(--theme-text-primary)]">
       <AutoRefresher />
       <div className="w-full">
-        <h1 className="text-5xl sm:text-6xl font-bold mb-8 text-[var(--theme-text-primary)] text-center">Initiatives</h1>
 
         {error && (
           <div className="mb-6 text-red-300 bg-red-900/20 border border-red-700/50 rounded-md p-4 w-full text-center shadow-sm">
@@ -183,35 +215,35 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
         )}
 
         {!error && activeInitiatives.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+          <div className="flex flex-col gap-3 w-full max-w-[50%] mx-auto">
             {activeInitiatives
               .sort((a, b) => b.completionPercentage - a.completionPercentage)
               .map(({ initiative, completionPercentage, completedProjectCount, totalProjectCount }) => {
                 const isGlass = initiative.name.toLowerCase().includes('glass');
                 return (
-                  <div key={initiative.id} className={`bg-[var(--theme-card-bg)] p-5 sm:p-6 rounded-lg shadow border border-[var(--theme-border)] hover:border-gray-500 flex flex-col ${isGlass ? 'glass-effect shimmer-effect' : ''}`}>
-                    <h2 className={`text-4xl sm:text-5xl font-semibold mb-3 flex items-center ${isGlass ? 'rainbow-text' : 'text-[var(--theme-text-primary)]'}`}>
-                      {renderInitiativeTitle(initiative.name)}
-                    </h2>
-                    <div>
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-base sm:text-lg text-[var(--theme-text-secondary)] space-y-2 sm:space-y-0">
-                        {/* Status and Last Updated removed as per request */}
+                  <div key={initiative.id} className={`bg-[var(--theme-card-bg)] p-3 sm:p-4 rounded-lg shadow border border-[var(--theme-border)] hover:border-gray-500 ${isGlass ? 'glass-effect shimmer-effect' : ''}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h2 className={`text-lg sm:text-xl font-semibold flex items-center ${isGlass ? 'rainbow-text' : 'text-[var(--theme-text-primary)]'}`}>
+                          {renderInitiativeTitle(initiative.name)}
+                        </h2>
                       </div>
-                      {/* Target Date display removed as per request */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-[var(--theme-text-secondary)]">
+                            {completedProjectCount}/{totalProjectCount} projects completed
+                          </span>
+                          <span className="text-xs text-[var(--theme-text-secondary)]">
+                            ({Math.round(completionPercentage)}%)
+                          </span>
+                        </div>
+                        <PieChart 
+                          percentage={completionPercentage} 
+                          health={initiative.health}
+                          size={32}
+                        />
+                      </div>
                     </div>
-
-                    <div className="mt-4">
-                      <div className="flex justify-between mb-1">
-                        <span className="text-xl sm:text-2xl font-medium text-[var(--theme-text-secondary)]">Completed ({completedProjectCount}/{totalProjectCount})</span>
-                      </div>
-                      <div className="w-full bg-[var(--theme-border)] rounded-full h-1.5">
-                        <div
-                          className={`${getProgressBarBgColor(initiative.health)} h-1.5 rounded-full`}
-                          style={{ width: `${completionPercentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
                   </div>
                 );
             })}
