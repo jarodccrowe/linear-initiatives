@@ -224,16 +224,16 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, error }) => {
                   <div key={initiative.id} className={`bg-[var(--theme-card-bg)] p-3 sm:p-4 rounded-lg shadow border border-[var(--theme-border)] hover:border-gray-500 ${isGlass ? 'glass-effect shimmer-effect' : ''}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <h2 className={`text-lg sm:text-xl font-semibold flex items-center ${isGlass ? 'rainbow-text' : 'text-[var(--theme-text-primary)]'}`}>
+                        <h2 className={`text-xl sm:text-2xl font-semibold flex items-center ${isGlass ? 'rainbow-text' : 'text-[var(--theme-text-primary)]'}`}>
                           {renderInitiativeTitle(initiative.name)}
                         </h2>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-[var(--theme-text-secondary)]">
+                          <span className="text-base font-medium text-[var(--theme-text-secondary)]">
                             {completedProjectCount}/{totalProjectCount} projects completed
                           </span>
-                          <span className="text-xs text-[var(--theme-text-secondary)]">
+                          <span className="text-sm text-[var(--theme-text-secondary)]">
                             ({Math.round(completionPercentage)}%)
                           </span>
                         </div>
