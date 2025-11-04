@@ -27,8 +27,9 @@
 body {
   background: var(--theme-bg);
   color: var(--theme-text-primary);
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 1.1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-size: 1.2rem;
+  line-height: 1.6;
 }
 
 .flashing-image-overlay {
@@ -55,4 +56,34 @@ body {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: rainbow-cycle 15s ease infinite;
+}
+
+/* Smooth hover animations for better TV interaction */
+@keyframes subtle-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.1); }
+  50% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.2), 0 0 40px rgba(255, 255, 255, 0.1); }
+}
+
+/* Enhanced card styling for TV viewing */
+.tv-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tv-card:hover {
+  animation: subtle-pulse 2s ease-in-out infinite, glow 3s ease-in-out infinite;
+}
+
+/* Better text contrast for TV screens */
+.tv-text-enhanced {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Progress indicator enhancements */
+.progress-glow {
+  filter: drop-shadow(0 0 8px currentColor);
 }
