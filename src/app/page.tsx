@@ -1,8 +1,5 @@
-import React, { JSX } from 'react'; 
-import { LinearClient, Initiative, Project, ProjectStatus, Cycle } from "@linear/sdk";
-import { FaTruck } from 'react-icons/fa'; 
-import { FaSeedling } from 'react-icons/fa'; 
-import { GiBrickWall } from 'react-icons/gi'; 
+import React, { JSX } from 'react';
+import { LinearClient, Initiative, Project, ProjectStatus } from "@linear/sdk";
 import AutoRefresher from '@/components/AutoRefresher'; 
 
 interface ProjectWithStatus {
@@ -204,33 +201,30 @@ async function getActiveAndRecentInitiatives(): Promise<InitiativeWithProjects[]
   }
 }
 
-const toSentenceCase = (text: string): string => {
-  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-};
-
-const formatTargetDate = (targetDate?: any): string => {
+const formatTargetDate = (targetDate?: unknown): string => {
   if (!targetDate) return '';
-  
+
   // Handle TimelessDate object
-  if (typeof targetDate === 'object' && targetDate.year && targetDate.month && targetDate.day) {
-    const date = new Date(targetDate.year, targetDate.month - 1, targetDate.day);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+  if (typeof targetDate === 'object' && targetDate !== null && 'year' in targetDate && 'month' in targetDate && 'day' in targetDate) {
+    const td = targetDate as { year: number; month: number; day: number };
+    const date = new Date(td.year, td.month - 1, td.day);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
   }
-  
+
   // Handle string dates
   if (typeof targetDate === 'string') {
     const date = new Date(targetDate);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
   }
-  
+
   return '';
 };
 
@@ -269,9 +263,8 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
   // Calculate overall stats
   const totalProjects = activeInitiatives.reduce((sum, item) => sum + item.totalProjectCount, 0);
   const completedProjects = activeInitiatives.reduce((sum, item) => sum + item.completedProjectCount, 0);
-  const overallCompletionRate = totalProjects > 0 ? Math.round((completedProjects / totalProjects) * 100) : 0;
   const activeCycles = cycles.filter(cycle => cycle.isActive);
-  const avgCycleProgress = activeCycles.length > 0 
+  const avgCycleProgress = activeCycles.length > 0
     ? Math.round((activeCycles.reduce((sum, cycle) => sum + cycle.progress, 0) / activeCycles.length) * 100)
     : 0;
 
@@ -428,9 +421,10 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
                     if (!b.targetDate) return -1;
 
                     // Convert TimelessDate objects to comparable dates
-                    const getComparableDate = (targetDate: any) => {
-                      if (typeof targetDate === 'object' && targetDate.year && targetDate.month && targetDate.day) {
-                        return new Date(targetDate.year, targetDate.month - 1, targetDate.day);
+                    const getComparableDate = (targetDate: unknown) => {
+                      if (typeof targetDate === 'object' && targetDate !== null && 'year' in targetDate && 'month' in targetDate && 'day' in targetDate) {
+                        const td = targetDate as { year: number; month: number; day: number };
+                        return new Date(td.year, td.month - 1, td.day);
                       }
                       if (typeof targetDate === 'string') {
                         return new Date(targetDate);
