@@ -336,7 +336,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
               
               {/* Active Initiatives Summary */}
               <div className="col-span-2 lg:col-span-4 text-center">
-                <div className="text-5xl lg:text-6xl font-medium text-[var(--theme-text-primary)] tv-text-enhanced">
+                <div className="text-3xl lg:text-4xl font-medium text-[var(--theme-text-primary)] tv-text-enhanced">
                   {activeInitiatives.length} Active Initiatives • {completedProjects}/{totalProjects} Projects Complete
                 </div>
               </div>
@@ -346,7 +346,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
               {activeCycles.length > 0 && (
                 <div className="bg-[var(--theme-card-bg)] p-6 sm:p-8 lg:p-10 rounded-2xl shadow-lg border-2 border-[var(--theme-border)] tv-card text-center">
                   <div className="flex items-center justify-center gap-4">
-                    <div className="text-6xl lg:text-7xl xl:text-8xl font-bold text-[var(--status-green)] tv-text-enhanced">
+                    <div className="text-4xl lg:text-5xl xl:text-6xl font-bold text-[var(--status-green)] tv-text-enhanced">
                       {avgCycleProgress}%
                     </div>
                     <PieChart
@@ -355,7 +355,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
                       size={64}
                     />
                   </div>
-                  <div className="text-4xl lg:text-5xl font-medium text-[var(--theme-text-primary)] tv-text-enhanced mt-2">
+                  <div className="text-3xl lg:text-4xl font-medium text-[var(--theme-text-primary)] tv-text-enhanced mt-2">
                     Avg Cycle Progress
                   </div>
                 </div>
@@ -389,18 +389,18 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
                   <div key={cycle.name} className="bg-[var(--theme-card-bg)] p-3 sm:p-4 rounded-lg shadow border border-[var(--theme-border)] hover:border-gray-500">
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <h2 className="text-3xl sm:text-4xl font-semibold text-[var(--theme-text-primary)]">
+                        <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--theme-text-primary)]">
                           {cycle.name}
                         </h2>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-xl font-medium text-[var(--theme-text-primary)]">
+                          <span className="text-lg font-medium text-[var(--theme-text-primary)]">
                             {Math.round(cycle.progress * 100)}% complete
                           </span>
                         </div>
-                        <PieChart 
-                          percentage={cycle.progress * 100} 
+                        <PieChart
+                          percentage={cycle.progress * 100}
                           health="onTrack"
                           size={32}
                         />
@@ -417,10 +417,10 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b-2 border-[var(--theme-border)]">
-                  <th className="text-left p-4 text-5xl lg:text-6xl font-normal text-[var(--theme-text-primary)] tv-text-enhanced">Initiative</th>
-                  <th className="text-center p-4 text-5xl lg:text-6xl font-normal text-[var(--theme-text-primary)] tv-text-enhanced">Health</th>
-                  <th className="text-right p-4 text-5xl lg:text-6xl font-normal text-[var(--theme-text-primary)] tv-text-enhanced">Target Date</th>
-                  <th className="text-right p-4 text-5xl lg:text-6xl font-normal text-[var(--theme-text-primary)] tv-text-enhanced">Progress</th>
+                  <th className="text-left p-4 text-3xl lg:text-4xl font-normal text-[var(--theme-text-primary)] tv-text-enhanced">Initiative</th>
+                  <th className="text-center p-4 text-3xl lg:text-4xl font-normal text-[var(--theme-text-primary)] tv-text-enhanced">Health</th>
+                  <th className="text-right p-4 text-3xl lg:text-4xl font-normal text-[var(--theme-text-primary)] tv-text-enhanced">Target Date</th>
+                  <th className="text-right p-4 text-3xl lg:text-4xl font-normal text-[var(--theme-text-primary)] tv-text-enhanced">Progress</th>
                 </tr>
               </thead>
               <tbody>
@@ -476,29 +476,29 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
                     return (
                       <tr key={initiative.id} className={`border-b border-[var(--theme-border)] hover:bg-[var(--theme-card-bg)] ${isCompleted ? 'opacity-70' : ''} ${isGlass ? 'glass-effect shimmer-effect' : ''}`}>
                         <td className="py-8 px-4">
-                          <span className={`text-6xl sm:text-7xl lg:text-8xl font-semibold ${isGlass ? 'rainbow-text' : 'text-[var(--theme-text-primary)] tv-text-enhanced'}`}>
+                          <span className={`text-4xl sm:text-5xl lg:text-6xl font-semibold ${isGlass ? 'rainbow-text' : 'text-[var(--theme-text-primary)] tv-text-enhanced'}`}>
                             {renderInitiativeTitle(initiative.name)}
                           </span>
                         </td>
                         <td className="py-8 px-4 text-center">
-                          <span className={`text-4xl lg:text-5xl tv-text-enhanced ${getHealthColor(health)} flex items-center justify-center`}>
+                          <span className={`text-3xl lg:text-4xl tv-text-enhanced ${getHealthColor(health)} flex items-center justify-center`}>
                             {getHealthLabel(health)}
                           </span>
                         </td>
                         <td className="py-8 px-4 text-right">
                           {isCompleted ? (
-                            <span className="text-4xl lg:text-5xl text-[var(--status-green)] tv-text-enhanced font-normal">
+                            <span className="text-3xl lg:text-4xl text-[var(--status-green)] tv-text-enhanced font-normal">
                               ✓ COMPLETED
                             </span>
                           ) : targetDate ? (
-                            <div className="text-4xl lg:text-5xl tv-text-enhanced text-[var(--theme-text-secondary)] font-normal">
+                            <div className="text-3xl lg:text-4xl tv-text-enhanced text-[var(--theme-text-secondary)] font-normal">
                               {formatTargetDate(targetDate, targetDateResolution)}
                             </div>
                           ) : null}
                         </td>
                         <td className="py-8 px-4 text-right">
                           <div className="flex justify-end items-center gap-4">
-                            <span className="text-4xl lg:text-5xl text-[var(--theme-text-secondary)] tv-text-enhanced font-normal">
+                            <span className="text-3xl lg:text-4xl text-[var(--theme-text-secondary)] tv-text-enhanced font-normal">
                               {completedProjectCount}/{totalProjectCount}
                             </span>
                             <ProgressBar percentage={completionPercentage} isCompleted={isCompleted} />
