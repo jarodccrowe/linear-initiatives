@@ -255,7 +255,7 @@ const ProgressBar: React.FC<{ percentage: number; isCompleted: boolean }> = ({ p
   const barColor = isCompleted ? 'bg-[var(--status-green)]' : 'bg-[var(--status-blue)]';
 
   return (
-    <div className="w-32 lg:w-40 h-2 bg-[var(--theme-border)] rounded-full overflow-hidden">
+    <div className="w-40 lg:w-52 h-2 bg-[var(--theme-border)] rounded-full overflow-hidden">
       <div
         className={`h-full ${barColor} transition-all duration-300`}
         style={{ width: `${percentage}%` }}
@@ -466,38 +466,39 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
                     };
 
                     const getHealthLabel = (health?: string) => {
-                      if (health === 'onTrack') return '● On Track';
-                      if (health === 'atRisk') return '● At Risk';
-                      if (health === 'offTrack') return '● Off Track';
-                      return '●';
+                      const dotClass = health === 'onTrack' ? 'status-dot status-dot-on-track' : 'status-dot';
+                      if (health === 'onTrack') return <><span className={dotClass} style={{color: 'var(--status-green)'}}></span>On Track</>;
+                      if (health === 'atRisk') return <><span className={dotClass} style={{color: 'var(--status-amber)'}}></span>At Risk</>;
+                      if (health === 'offTrack') return <><span className={dotClass} style={{color: 'var(--status-red)'}}></span>Off Track</>;
+                      return <span className={dotClass}></span>;
                     };
 
                     return (
                       <tr key={initiative.id} className={`border-b border-[var(--theme-border)] hover:bg-[var(--theme-card-bg)] ${isCompleted ? 'opacity-70' : ''} ${isGlass ? 'glass-effect shimmer-effect' : ''}`}>
-                        <td className="p-4">
-                          <span className={`text-4xl sm:text-5xl lg:text-6xl font-normal ${isGlass ? 'rainbow-text' : 'text-[var(--theme-text-primary)] tv-text-enhanced'}`}>
+                        <td className="py-6 px-4">
+                          <span className={`text-4xl sm:text-5xl lg:text-6xl font-semibold ${isGlass ? 'rainbow-text' : 'text-[var(--theme-text-primary)] tv-text-enhanced'}`}>
                             {renderInitiativeTitle(initiative.name)}
                           </span>
                         </td>
-                        <td className="p-4 text-center">
-                          <span className={`text-2xl lg:text-3xl tv-text-enhanced ${getHealthColor(health)}`}>
+                        <td className="py-6 px-4 text-center">
+                          <span className={`text-2xl lg:text-3xl tv-text-enhanced ${getHealthColor(health)} flex items-center justify-center`}>
                             {getHealthLabel(health)}
                           </span>
                         </td>
-                        <td className="p-4 text-right">
+                        <td className="py-6 px-4 text-right">
                           {isCompleted ? (
-                            <span className="text-2xl lg:text-3xl text-[var(--status-green)] tv-text-enhanced">
+                            <span className="text-2xl lg:text-3xl text-[var(--status-green)] tv-text-enhanced font-normal">
                               ✓ COMPLETED
                             </span>
                           ) : targetDate ? (
-                            <div className="text-2xl lg:text-3xl tv-text-enhanced text-[var(--theme-text-secondary)]">
+                            <div className="text-2xl lg:text-3xl tv-text-enhanced text-[var(--theme-text-secondary)] font-normal">
                               {formatTargetDate(targetDate, targetDateResolution)}
                             </div>
                           ) : null}
                         </td>
-                        <td className="p-4 text-right">
+                        <td className="py-6 px-4 text-right">
                           <div className="flex justify-end items-center gap-4">
-                            <span className="text-2xl lg:text-3xl text-[var(--theme-text-secondary)] tv-text-enhanced">
+                            <span className="text-2xl lg:text-3xl text-[var(--theme-text-secondary)] tv-text-enhanced font-normal">
                               {completedProjectCount}/{totalProjectCount}
                             </span>
                             <ProgressBar percentage={completionPercentage} isCompleted={isCompleted} />

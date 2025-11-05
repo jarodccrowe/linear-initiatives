@@ -2,7 +2,7 @@
 
 :root {
   /* Background Colors */
-  --theme-bg: #000000;
+  --theme-bg: #1C1C1E;
   --theme-card-bg: #1C1C1E;
   --theme-tertiary-bg: #2C2C2E;
 
@@ -44,7 +44,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: SFMono, SFMono-Regular, Hack, Monaco, Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
 
@@ -53,9 +53,20 @@
 body {
   background: var(--theme-bg);
   color: var(--theme-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 1.2rem;
   line-height: 1.6;
+  font-weight: 400;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background-color: currentColor;
+  box-shadow: 0 0 8px currentColor;
 }
 
 .flashing-image-overlay {
