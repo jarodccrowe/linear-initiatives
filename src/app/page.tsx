@@ -13,8 +13,10 @@ interface InitiativeWithProjects {
   completionPercentage: number;
   completedProjectCount: number;
   totalProjectCount: number;
-  targetDate?: string;
+  targetDate?: unknown;
+  targetDateResolution?: string;
   isCompleted: boolean;
+  health?: string;
 }
 
 interface CycleInfo {
@@ -171,7 +173,9 @@ async function getActiveAndRecentInitiatives(): Promise<InitiativeWithProjects[]
           completedProjectCount,
           totalProjectCount,
           targetDate: initiative.targetDate,
-          isCompleted: initiative.status === 'Completed'
+          targetDateResolution: initiative.targetDateResolution,
+          isCompleted: initiative.status === 'Completed',
+          health: initiative.health
         });
       }
 
@@ -201,49 +205,61 @@ async function getActiveAndRecentInitiatives(): Promise<InitiativeWithProjects[]
   }
 }
 
-const formatTargetDate = (targetDate?: unknown): string => {
+const formatTargetDate = (targetDate?: unknown, resolution?: string): string => {
   if (!targetDate) return '';
+
+  let date: Date | null = null;
 
   // Handle TimelessDate object
   if (typeof targetDate === 'object' && targetDate !== null && 'year' in targetDate && 'month' in targetDate && 'day' in targetDate) {
     const td = targetDate as { year: number; month: number; day: number };
-    const date = new Date(td.year, td.month - 1, td.day);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    date = new Date(td.year, td.month - 1, td.day);
   }
-
   // Handle string dates
-  if (typeof targetDate === 'string') {
-    const date = new Date(targetDate);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+  else if (typeof targetDate === 'string') {
+    date = new Date(targetDate);
   }
 
-  return '';
+  if (!date) return '';
+
+  // Format based on resolution type
+  switch (resolution) {
+    case 'year':
+      return date.toLocaleDateString('en-US', { year: 'numeric' });
+
+    case 'halfYear':
+      const halfYear = date.getMonth() < 6 ? 'H1' : 'H2';
+      return `${halfYear} ${date.getFullYear()}`;
+
+    case 'quarter':
+      const quarter = Math.floor(date.getMonth() / 3) + 1;
+      return `Q${quarter} ${date.getFullYear()}`;
+
+    case 'month':
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        year: 'numeric'
+      });
+
+    default:
+      // Default to full date (day resolution)
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+  }
 };
 
-const FuelGauge: React.FC<{ percentage: number }> = ({ percentage }) => {
-  const filledBars = Math.round((percentage / 100) * 10);
-  const barColor = percentage < 70 ? 'bg-[var(--status-amber)]' : 'bg-[var(--status-green)]';
+const ProgressBar: React.FC<{ percentage: number; isCompleted: boolean }> = ({ percentage, isCompleted }) => {
+  const barColor = isCompleted ? 'bg-[var(--status-green)]' : 'bg-[var(--status-blue)]';
 
   return (
-    <div className="flex items-center gap-1">
-      {[...Array(10)].map((_, index) => (
-        <div
-          key={index}
-          className={`w-3 h-8 lg:w-4 lg:h-10 rounded-sm ${
-            index < filledBars
-              ? barColor
-              : 'bg-[var(--theme-border)]'
-          }`}
-        />
-      ))}
+    <div className="w-32 lg:w-40 h-2 bg-[var(--theme-border)] rounded-full overflow-hidden">
+      <div
+        className={`h-full ${barColor} transition-all duration-300`}
+        style={{ width: `${percentage}%` }}
+      />
     </div>
   );
 };
@@ -402,6 +418,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
               <thead>
                 <tr className="border-b-2 border-[var(--theme-border)]">
                   <th className="text-left p-4 text-3xl lg:text-4xl font-normal text-[var(--theme-text-primary)] tv-text-enhanced">Initiative</th>
+                  <th className="text-center p-4 text-3xl lg:text-4xl font-normal text-[var(--theme-text-primary)] tv-text-enhanced">Health</th>
                   <th className="text-right p-4 text-3xl lg:text-4xl font-normal text-[var(--theme-text-primary)] tv-text-enhanced">Target Date</th>
                   <th className="text-right p-4 text-3xl lg:text-4xl font-normal text-[var(--theme-text-primary)] tv-text-enhanced">Progress</th>
                 </tr>
@@ -438,13 +455,33 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
                     // Sort by nearest to furthest (ascending order)
                     return dateA.getTime() - dateB.getTime();
                   })
-                  .map(({ initiative, completionPercentage, completedProjectCount, totalProjectCount, targetDate, isCompleted }) => {
+                  .map(({ initiative, completionPercentage, completedProjectCount, totalProjectCount, targetDate, targetDateResolution, isCompleted, health }) => {
                     const isGlass = initiative.name.toLowerCase().includes('glass');
+
+                    const getHealthColor = (health?: string) => {
+                      if (health === 'onTrack') return 'text-[var(--status-green)]';
+                      if (health === 'atRisk') return 'text-[var(--status-amber)]';
+                      if (health === 'offTrack') return 'text-[var(--status-red)]';
+                      return 'text-[var(--theme-text-tertiary)]';
+                    };
+
+                    const getHealthLabel = (health?: string) => {
+                      if (health === 'onTrack') return '● On Track';
+                      if (health === 'atRisk') return '● At Risk';
+                      if (health === 'offTrack') return '● Off Track';
+                      return '●';
+                    };
+
                     return (
                       <tr key={initiative.id} className={`border-b border-[var(--theme-border)] hover:bg-[var(--theme-card-bg)] ${isCompleted ? 'opacity-70' : ''} ${isGlass ? 'glass-effect shimmer-effect' : ''}`}>
                         <td className="p-4">
                           <span className={`text-4xl sm:text-5xl lg:text-6xl font-normal ${isGlass ? 'rainbow-text' : 'text-[var(--theme-text-primary)] tv-text-enhanced'}`}>
                             {renderInitiativeTitle(initiative.name)}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`text-2xl lg:text-3xl tv-text-enhanced ${getHealthColor(health)}`}>
+                            {getHealthLabel(health)}
                           </span>
                         </td>
                         <td className="p-4 text-right">
@@ -454,7 +491,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
                             </span>
                           ) : targetDate ? (
                             <div className="text-2xl lg:text-3xl tv-text-enhanced text-[var(--theme-text-secondary)]">
-                              {formatTargetDate(targetDate)}
+                              {formatTargetDate(targetDate, targetDateResolution)}
                             </div>
                           ) : null}
                         </td>
@@ -463,7 +500,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
                             <span className="text-2xl lg:text-3xl text-[var(--theme-text-secondary)] tv-text-enhanced">
                               {completedProjectCount}/{totalProjectCount}
                             </span>
-                            <FuelGauge percentage={completionPercentage} />
+                            <ProgressBar percentage={completionPercentage} isCompleted={isCompleted} />
                           </div>
                         </td>
                       </tr>
@@ -495,4 +532,6 @@ export default async function Page() {
   }
 }
 
-export const revalidate = 3600; // Revalidate every hour to avoid rate limiting
+// In development, cache for 24 hours to avoid rate limiting during hot reloads
+// In production, revalidate every hour
+export const revalidate = process.env.NODE_ENV === 'development' ? 86400 : 3600;
