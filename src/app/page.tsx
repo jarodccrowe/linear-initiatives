@@ -533,6 +533,5 @@ export default async function Page() {
   }
 }
 
-// In development, cache for 24 hours to avoid rate limiting during hot reloads
-// In production, revalidate every hour
-export const revalidate = process.env.NODE_ENV === 'development' ? 86400 : 3600;
+// Revalidate every hour to avoid rate limiting
+export const revalidate = 3600;
