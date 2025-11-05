@@ -49,7 +49,7 @@ async function getCycles(): Promise<CycleInfo[]> {
     const cycles = cyclesConnection.nodes.map(cycle => ({
       name: cycle.name || 'Unnamed Cycle',
       progress: cycle.progress,
-      isActive: cycle.isActive ?? false,
+      isActive: (cycle as { isActive?: boolean }).isActive ?? false,
     }));
 
     return cycles;
