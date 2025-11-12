@@ -431,29 +431,8 @@ const HomePage: React.FC<HomePageProps> = ({ activeInitiatives, cycles, error })
                       return a.isCompleted ? 1 : -1;
                     }
 
-                    // If both have same completion status, sort by target date
-                    // Handle null/undefined target dates - put them at the bottom
-                    if (!a.targetDate && !b.targetDate) return 0;
-                    if (!a.targetDate) return 1;
-                    if (!b.targetDate) return -1;
-
-                    // Convert TimelessDate objects to comparable dates
-                    const getComparableDate = (targetDate: unknown) => {
-                      if (typeof targetDate === 'object' && targetDate !== null && 'year' in targetDate && 'month' in targetDate && 'day' in targetDate) {
-                        const td = targetDate as { year: number; month: number; day: number };
-                        return new Date(td.year, td.month - 1, td.day);
-                      }
-                      if (typeof targetDate === 'string') {
-                        return new Date(targetDate);
-                      }
-                      return new Date(0); // fallback
-                    };
-
-                    const dateA = getComparableDate(a.targetDate);
-                    const dateB = getComparableDate(b.targetDate);
-
-                    // Sort by nearest to furthest (ascending order)
-                    return dateA.getTime() - dateB.getTime();
+                    // If both have same completion status, sort by progress percentage (highest to lowest)
+                    return b.completionPercentage - a.completionPercentage;
                   })
                   .map(({ initiative, completionPercentage, completedProjectCount, totalProjectCount, targetDate, targetDateResolution, isCompleted, health }) => {
                     const isGlass = initiative.name.toLowerCase().includes('glass');
